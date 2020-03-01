@@ -3,16 +3,15 @@ using HabrPostApi.Models;
 using HabrPostApi.Parsers;
 using HabrPostApi.Settings;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace HabrPostApi.ParserWorkers
 {
-    public interface IAsyncHabrParserWorker
+    public interface IHabrParserWorker
     {
         IPageParserSettings Settings { get; set; }
         IHabrParser Parser { get; set; }
-        IAsyncHabrDataLoader DataLoader { get; set; }
+        IHabrDataLoader DataLoader { get; set; }
 
-        Task<List<HabrPost>> ParseAsync();
+        List<HabrPost> Parse();
     }
 }

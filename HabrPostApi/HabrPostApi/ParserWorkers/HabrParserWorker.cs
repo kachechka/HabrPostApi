@@ -1,31 +1,32 @@
 ﻿using AngleSharp.Html.Dom;
 using HabrPostApi.DataLoaders;
+using HabrPostApi.Extensions;
 using HabrPostApi.Models;
 using HabrPostApi.Parsers;
 using HabrPostApi.Settings;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace HabrPostApi.ParserWorkers
 {
-    public class HabrParserWorker : IAsyncHabrParserWorker
+    public class HabrParserWorker : IHabrParserWorker
     {
         public IPageParserSettings Settings { get; set; }
         public IHabrParser Parser { get; set; }
-        public IAsyncHabrDataLoader DataLoader { get; set; }
+        public IHabrDataLoader DataLoader { get; set; }
 
         public HabrParserWorker(
             IPageParserSettings settings,
             IHabrParser parser,
-            IAsyncHabrDataLoader dataLoader)
+            IHabrDataLoader dataLoader)
         {
             Settings = settings;
             Parser = parser;
             DataLoader = dataLoader;
+            Parser.InitializeTryParsers();
         }
 
-        public async Task<List<HabrPost>> ParseAsync()
+        public List<HabrPost> Parse()
         {
             if (Settings is null)
             {
@@ -43,7 +44,7 @@ namespace HabrPostApi.ParserWorkers
 
             while (Settings.CanParse)
             {
-                document = await DataLoader.LoadAsync(Settings.Url);
+                document = DataLoader.LoadAsync(Settings.Url).GetAwaiter().GetResult();
 
                 pagePosts = Parser.Parse(document);
 

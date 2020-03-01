@@ -2,19 +2,26 @@
 using HabrPostApi.Parsers;
 using HabrPostApi.ParserWorkers;
 using HabrPostApi.Settings;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace HabrPostApi.Extensions
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddCors(
-            this IServiceCollection services,
-            string policyName)
+        private static readonly string _policyName;
+
+        static ServiceCollectionExtensions()
+            => _policyName = "AllowAll";
+
+        public static IServiceCollection AddHabrCors(
+            this IServiceCollection services)
         {
             services.AddCors(options =>
             {
-                options.AddPolicy(policyName, builder =>
+                options.AddPolicy(_policyName, builder =>
                 {
                     builder
                         .AllowAnyOrigin()
@@ -25,6 +32,10 @@ namespace HabrPostApi.Extensions
 
             return services;
         }
+
+        public static IApplicationBuilder UseHabrCors(
+            this IApplicationBuilder self)
+            => self.UseCors(_policyName);
 
         public static IServiceCollection AddHabrSwagger(
             this IServiceCollection services)
@@ -40,14 +51,31 @@ namespace HabrPostApi.Extensions
             return services;
         }
 
+        public static IServiceCollection AddSettings<TService, TImplemnt>(
+            this IServiceCollection self,
+            IConfiguration configuration)
+            where TService : class
+            where TImplemnt : class, TService, new()
+        {
+            var sectionName = typeof(TImplemnt).Name;
+            var section = configuration.GetSection(sectionName);
+
+            self.Configure<TImplemnt>(section);
+
+            self.AddScoped<TService>(sp =>
+                sp.GetRequiredService<IOptions<TImplemnt>>().Value);
+
+            return self;
+        }
+
         public static IServiceCollection AddHabr(
             this IServiceCollection services)
         {
             services
                 .AddScoped<IPageParserSettings, HabrParserSettings>()
-                .AddScoped<IAsyncHabrDataLoader, HtmlDataLoader>()
+                .AddScoped<IHabrDataLoader, HtmlDataLoader>()
                 .AddScoped<IHabrParser, HabrParser>()
-                .AddScoped<IAsyncHabrParserWorker, HabrParserWorker>();
+                .AddScoped<IHabrParserWorker, HabrParserWorker>();
 
             return services;
         }

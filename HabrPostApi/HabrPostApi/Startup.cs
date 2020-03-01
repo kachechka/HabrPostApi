@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using HabrPostApi.Extensions;
+using HabrPostApi.Settings;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -10,22 +11,18 @@ namespace HabrPostApi
 {
     public class Startup
     {
-        private readonly string _policyName;
         public IConfiguration Configuration { get; }
 
         public Startup(IConfiguration configuration)
-        {
-            _policyName = "AllowAll";
-            Configuration = configuration;
-        }
+            => Configuration = configuration;
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddHabr();
-
-            services.AddCors(_policyName);
-
-            services.AddHabrSwagger();
+            services.AddHabr()
+                .AddSettings<IHabrSelector, HabrSelector>(Configuration)
+                .AddHabrCors()
+                .AddHabrSwagger()
+                .AddHabrGraphQl();
 
             services.AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
@@ -42,7 +39,8 @@ namespace HabrPostApi
                 app.UseHsts();
             }
 
-            app.UseCors(_policyName);
+            app.UseHabrCors()
+                .UseHabrGraphQl();
 
             ConfigSecurityProtocol();
 

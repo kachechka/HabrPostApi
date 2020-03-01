@@ -1,6 +1,7 @@
 ﻿using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
 using HabrPostApi.Models;
+using HabrPostApi.Settings;
 using HabrPostApi.TryParsers.Collections;
 using System;
 using System.Collections.Generic;
@@ -9,25 +10,13 @@ namespace HabrPostApi.Parsers
 {
     public class HabrParser : IHabrParser
     {
-        private readonly Dictionary<string, string> _selectors;
-
+        public IHabrSelector Selectors { get; }
         public TryParserCollection<int> TryParsers { get; private set; }
 
-        public HabrParser()
+        public HabrParser(IHabrSelector selectors)
         {
-            _selectors = new Dictionary<string, string>
-            {
-                { "Post", ".post" },
-                { "Title", ".post__title_link" },
-                { "Footer", ".post__footer" },
-                { "Hub", ".hub-link" },
-                { "Mark", ".voting-wjt__counter" },
-                { "Bookmark", ".bookmark__counter" },
-                { "View", ".post-stats__views-count" },
-                { "Comment", ".post-stats__comments-count" },
-            };
-
             TryParsers = new TryParserCollection<int>();
+            Selectors = selectors;
         }
 
         public List<HabrPost> Parse(IHtmlDocument input)
@@ -37,7 +26,7 @@ namespace HabrPostApi.Parsers
                 throw new ArgumentNullException(nameof(input));
             }
 
-            var postElements = input.QuerySelectorAll(_selectors["Post"]);
+            var postElements = input.QuerySelectorAll(Selectors.Post);
 
             if (postElements.Length == 0)
             {
@@ -56,8 +45,8 @@ namespace HabrPostApi.Parsers
 
         private HabrPost ParsePost(IElement postElement)
         {
-            var title = postElement.QuerySelector(_selectors["Title"]);
-            var footer = postElement.QuerySelector(_selectors["Footer"]);
+            var title = postElement.QuerySelector(Selectors.Title);
+            var footer = postElement.QuerySelector(Selectors.Footer);
 
             return new HabrPost
             {
@@ -70,7 +59,7 @@ namespace HabrPostApi.Parsers
 
         private List<HabrHub> ParseHubs(IElement post)
         {
-            var hubElements = post.QuerySelectorAll(_selectors["Hub"]);
+            var hubElements = post.QuerySelectorAll(Selectors.Hub);
 
             if (hubElements.Length == 0)
             {
@@ -93,10 +82,10 @@ namespace HabrPostApi.Parsers
 
         private HabrPostDetails ParsePostDetails(IElement footer)
         {
-            var mark = ParseNumber(footer, _selectors["Mark"]);
-            var countBookmarks = ParseNumber(footer, _selectors["Bookmark"]);
-            var countViews = ParseNumber(footer, _selectors["View"]);
-            var countComments = ParseNumber(footer, _selectors["Comment"]);
+            var mark = ParseNumber(footer, Selectors.Mark);
+            var countBookmarks = ParseNumber(footer, Selectors.Bookmark);
+            var countViews = ParseNumber(footer, Selectors.View);
+            var countComments = ParseNumber(footer, Selectors.Comment);
 
             return new HabrPostDetails
             {

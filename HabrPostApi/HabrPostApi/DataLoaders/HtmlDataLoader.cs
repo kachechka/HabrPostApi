@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace HabrPostApi.DataLoaders
 {
-    public class HtmlDataLoader : IAsyncHabrDataLoader
+    public class HtmlDataLoader : IHabrDataLoader
     {
         private readonly HttpClient _client;
         private readonly HtmlParser _parser;
